@@ -21,6 +21,7 @@ import Modal from "../../components/Modal";
 
 import { COLORS, FONTS, SIZES } from "../../consts/theme";
 import { ERROR, SHARED } from "../../assets/images";
+import ModalLoading from "../../components/ModalLoading";
 
 const MaskedValue = (props) => {
   return (
@@ -92,8 +93,17 @@ const ConfirmFunds = (props) => {
     //Init
     setIsLoading(true);
     setLoadingMessage("Initializing the transaction...");
-    const contractMethods = new ContractMethods(props.magic);
-    await contractMethods.init();
+    let contractMethods = new ContractMethods(props.magic)
+    if(props.contractMethods.initialized){
+      contractMethods = props.contractMethods
+    }else {
+      setLoadingMessage("Initializing the Blockchain connection...")
+      await contractMethods.init()
+      dispatch({
+        type: "INIT_CONTRACT_METHODS",
+        value: contractMethods,
+      });
+    }
     let amount = contractMethods.web3.utils.toBN(value);
 
     if (operation === "TopUp") {
@@ -145,18 +155,7 @@ const ConfirmFunds = (props) => {
       operation: operation,
     });*/
   };
-  let modalLoading = () => {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator
-          size="large"
-          style={{ padding: 10 }}
-          color={COLORS.primary}
-        />
-        <Text style={{ textAlign: "center" }}>{loadingMessage}</Text>
-      </View>
-    );
-  };
+
 
   return (
     <Fragment>
@@ -210,7 +209,7 @@ const ConfirmFunds = (props) => {
         style={isActionSuccess ? { height: 510 } : { height: 490 }}
         content={
           isLoading ? (
-            modalLoading()
+              <ModalLoading loadingMessage={loadingMessage} />
           ) : (
             <ModalContent
               handleAction={closeModal}
@@ -338,6 +337,7 @@ const modalStyles = StyleSheet.create({
 const mapStateToProps = (state) => {
   return {
     magic: state.magic,
+    contractMethods: state.contractMethods
   };
 };
 const mapDispatchToProps = (dispatch) => {

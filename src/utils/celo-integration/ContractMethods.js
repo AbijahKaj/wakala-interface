@@ -29,6 +29,7 @@ function ContractMethods(magic) {
         this.contract = contract
         this.web3 = web3
         this.ERC20 = ERC20
+        this.initialized = false
     }
 
     this.init = async () => {

@@ -43,12 +43,15 @@ export default function globalStore(state = initialState, action) {
             return nextState || state
 
         case 'ADD_TRANSACTION':
-            const exists = state.transactions.find( item => item.id === action.value.id)
-            if(exists === undefined) {
-                nextState = {...state, transactions: [...state.transactions, action.value]}
+            const index = state.transactions.findIndex( item => item.id === action.value.id)
+            if(index === -1) {
+                nextState = {...state, transactions: [action.value, ...state.transactions]}
             }
             else {
-                return state
+                // We just update the transaction
+                let elements = state.transactions
+                elements.splice(index, 1)
+                nextState = {...state, transactions: [action.value, ...elements]}
             }
             return nextState || state
         default:

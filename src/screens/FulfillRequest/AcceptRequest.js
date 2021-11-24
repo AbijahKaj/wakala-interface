@@ -10,8 +10,11 @@ import ScreenCmpt from "../../components/ScreenCmpt";
 import NavHeader from "../../components/NavHeader";
 import Modal from "../../components/Modal";
 
-import { COLORS, SIZES } from "../../consts/theme";
+import {COLORS, FONTS, SIZES} from "../../consts/theme";
 import { ERROR, SHARED } from "../../assets/images";
+import ContractMethods from "../../utils/celo-integration/ContractMethods";
+import ModalLoading from "../../components/ModalLoading";
+import {connect} from "react-redux";
 
 const MaskedValue = (props) => {
   return (
@@ -52,6 +55,9 @@ const ModalContent = (props) => {
           <Text style={modalStyles.text}>
             Something just happened. Please try again.
           </Text>
+          <Text style={{ ...FONTS.body5, textAlign: "center", marginTop: 5 }}>
+            {props.errorMessage}
+          </Text>
           <TouchableOpacity onPress={() => props.handleAction()}>
             <Text style={modalStyles.button}>Try again</Text>
           </TouchableOpacity>
@@ -71,31 +77,50 @@ const AcceptRequest = (props) => {
   const transaction = route.params.transaction
 
   const [isActionSuccess, setIsActionSuccess] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState("");
 
   const handleAction = async () => {
-    // Call function to perform the addressed action
-    // If response is success the set isOperationSuccess
-    // to true and open modal
-    // if (type === "deposit") {
-    //   performDepositAction().then(
-    //     (response) => {
-    //       setIsActionSuccess(true);
-    //     },
-    //     (error) => {
-    //       setIsActionSuccess(false);
-    //     }
-    //   );
-    // } else {
-    //   performWithdrawAction().then(
-    //     (response) => {
-    //       setIsActionSuccess(true);
-    //     },
-    //     (error) => {
-    //       setIsActionSuccess(false);
-    //     }
-    //   );
-    // }
     openModal();
+    //Init
+    setIsLoading(true);
+    setLoadingMessage("Initializing the transaction...");
+    let contractMethods = new ContractMethods(props.magic)
+    if(props.contractMethods.initialized){
+      contractMethods = props.contractMethods
+    }else {
+      setLoadingMessage("Initializing the Blockchain connection...")
+      await contractMethods.init()
+      dispatch({
+        type: "INIT_CONTRACT_METHODS",
+        value: contractMethods,
+      });
+    }
+
+    if (type === "DEPOSIT") {
+      setLoadingMessage("Sending the deposit transaction...");
+      try {
+        let result = await contractMethods.agentAcceptDepositTransaction(transaction.id);
+        setLoadingMessage("");
+        setIsLoading(false);
+      } catch (error) {
+        setLoadingMessage(error.toString());
+        setIsActionSuccess(false);
+        setIsLoading(false);
+      }
+    } else {
+      try {
+        setLoadingMessage("Sending the withdrawal transaction...");
+        let result = await contractMethods.agentAcceptWithdrawalTransaction(transaction.id);
+        setLoadingMessage("");
+        setIsLoading(false);
+      } catch (error) {
+        setLoadingMessage(error.toString());
+        setIsActionSuccess(false);
+        setIsLoading(false);
+      }
+    }
+    setIsLoading(false);
   };
 
   const openModal = () => {
@@ -104,7 +129,7 @@ const AcceptRequest = (props) => {
       return;
     }
 
-    if (type === "deposit") {
+    if (type === "DEPOSIT") {
       modalRef.current?.openModal();
     } else {
       navigation.navigate("Confirm Payment", {
@@ -138,7 +163,7 @@ const AcceptRequest = (props) => {
           <View style={styles.container}>
             <Text style={styles.title}>
               A member wants to
-              {type === "deposit"
+              {type === "DEPOSIT"
                 ? " deposit \n M-PESA to cUSD"
                 : " withdraw \n cUSD to M-PESA"}
             </Text>
@@ -176,7 +201,7 @@ const AcceptRequest = (props) => {
               </View>
             </LinearGradient>
 
-            {type === "deposit" && (
+            {type === "DEPOSIT" && (
               <Text style={styles.text}>
                 The total amount will be sent from your wallet to the Wakala
                 escrow account.
@@ -190,16 +215,20 @@ const AcceptRequest = (props) => {
         </View>
       </ScreenCmpt>
       <Modal
-        ref={modalRef}
-        style={isActionSuccess ? { height: 510 } : { height: 490 }}
-        content={
-          <ModalContent
-            type={type}
-            value={value}
-            handleAction={closeModal}
-            isActionSuccess={isActionSuccess}
-          />
-        }
+          ref={modalRef}
+          style={isActionSuccess ? { height: 510 } : { height: 490 }}
+          content={
+            isLoading ? (
+                <ModalLoading loadingMessage={loadingMessage} />
+            ) : (
+                <ModalContent
+                    handleAction={closeModal}
+                    operation={type}
+                    isActionSuccess={isActionSuccess}
+                    errorMessage={loadingMessage}
+                />
+            )
+          }
       />
     </Fragment>
   );
@@ -332,4 +361,18 @@ const modalStyles = StyleSheet.create({
   },
 });
 
-export default AcceptRequest;
+const mapStateToProps = (state) => {
+  return {
+    magic: state.magic,
+    contractMethods: state.contractMethods
+  };
+};
+const mapDispatchToProps = (dispatch) => {
+  return {
+    dispatch: async (action) => {
+      await dispatch(action);
+    },
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(AcceptRequest);
