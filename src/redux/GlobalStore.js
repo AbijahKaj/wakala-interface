@@ -1,20 +1,19 @@
 import Auth from "./reducers/Auth";
-import {Magic} from "@magic-sdk/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
-const saveSession = async (state) => {
-    await AsyncStorage.setItem('user', JSON.stringify({...state, magic: null}))
-}
 
 let initialState = {
     finishedBoarding: false,
     userMetadata: null,
     magic: {},
     phoneNumber: null,
-    transactions: []
+    transactions: [],
+    contractMethods: {}
 }
 
+const saveSession = async (state) => {
+    await AsyncStorage.setItem('user', JSON.stringify({...state, magic: null, contractMethods: null}))
+}
 
 export default function globalStore(state = initialState, action) {
     let nextState
@@ -22,6 +21,9 @@ export default function globalStore(state = initialState, action) {
     switch(action.type){
         case 'INIT':
             nextState = {...state, ...action.value}
+            return nextState || state
+        case 'INIT_CONTRACT_METHODS':
+            nextState = {...state, contractMethods: action.value}
             return nextState || state
         case 'UPDATE_USER_METADATA':
             nextState = {...state, ...action.value}

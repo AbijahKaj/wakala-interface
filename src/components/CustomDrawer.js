@@ -30,6 +30,7 @@ const CustomDrawer = (props) => {
   const [cUSD, setCUSD] = useState("0");
   const dispatch = useDispatch();
   const [user, setUser] = React.useState("");
+  const [loadingMessage, setLoadingMessage] = useState("");
 
   function pickFlag() {
     const phone_split = phone.split(" ");
@@ -44,35 +45,41 @@ const CustomDrawer = (props) => {
 
   const magic = props.magic;
 
-  useEffect(() => {
+  useEffect(async () => {
     pickFlag();
-    magic.user.getMetadata().then(
-      (userMetadata) => {
-        let { publicAddress } = userMetadata;
+    try{
+      setloading(true)
+      setLoadingMessage("Getting user's Metadata...")
+      let userMetadata = await magic.user.getMetadata()
+      let {publicAddress} = userMetadata;
+      dispatch({
+        type: "UPDATE_USER_METADATA",
+        value: {userMetadata: userMetadata},
+      });
+      let contractMethods = new ContractMethods(magic)
+      if(props.contractMethods.initialized){
+        contractMethods = props.contractMethods
+      }else {
+        setLoadingMessage("Initializing the Blockchain connection...")
+        await contractMethods.init()
         dispatch({
-          type: "UPDATE_USER_METADATA",
-          value: { userMetadata: userMetadata },
+          type: "INIT_CONTRACT_METHODS",
+          value: contractMethods,
         });
-        const contractMethods = new ContractMethods(magic);
-        contractMethods.web3.eth.getBalance(publicAddress).then(
-          (balance) => {
-            let amount = contractMethods.web3.utils.fromWei(balance);
-            setCUSD(amount);
-            setKSH((amount * 10).toString());
-            setloading(false);
-          },
-          (error) => {
-            alert(error);
-            setloading(false);
-          }
-        );
-      },
-      (error) => {
-        alert(error);
-        setloading(false);
       }
-    );
-  }, [phone]);
+
+      setLoadingMessage("Getting user's Balance...")
+      let balance = await contractMethods.web3.eth.getBalance(publicAddress)
+      let amount = contractMethods.web3.utils.fromWei(balance, "ether");
+      setCUSD(amount);
+      setKSH((amount * 10).toString());
+      setloading(false);
+    }catch (error) {
+      alert(error);
+      setloading(false);
+    }
+
+  }, []);
 
   // Logout of Magic session
   function logout() {
@@ -175,6 +182,7 @@ const mapStateToProps = (state) => {
   return {
     magic: state.magic,
     userMetadata: state.userMetadata,
+    contractMethods: state.contractMethods
   };
 };
 const mapDispatchToProps = (dispatch) => {

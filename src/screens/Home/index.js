@@ -81,12 +81,17 @@ const BannerContent = (props) => {
   );
 };
 
-const HomeScreen = ({ navigation, magic, transactions }) => {
+const HomeScreen = (props) => {
+  const { navigation, magic, transactions } = props
   const bannerRef = useRef();
 
   const [isEmpty, setIsEmpty] = useState(true);
   const [depositRequestData, setDepositRequestData] = useState([]);
+  const [isFetching, setIsFetching] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const dispatch = useDispatch();
+  let contractMethods = new ContractMethods(magic);
+
 
   function getDepositRequestData() {
     setDepositRequestData(rawData);
@@ -105,19 +110,35 @@ const HomeScreen = ({ navigation, magic, transactions }) => {
       setIsEmpty(true);
     }
   }
+  const onRefresh = async () => {
+    setIsFetching(true)
+    const transactions = contractMethods.initEventListeners();
+    const dispatchNewTx = (tx) => {
+      dispatch({ type: "ADD_TRANSACTION", value: tx });
+    };
+    contractMethods.getPastEvents(dispatchNewTx);
+    console.log(transactions);
+    setIsFetching(false)
+  }
 
   useEffect(async () => {
     getDepositRequestData();
     const isLoggedIn = await magic.user.isLoggedIn();
     if (isLoggedIn) {
-      const contractMethods = new ContractMethods(magic);
+
       await contractMethods.init();
-      const transactions = contractMethods.initEventListeners();
-      const dispatchNewTx = (tx) => {
-        dispatch({ type: "ADD_TRANSACTION", value: tx });
-      };
-      contractMethods.getPastEvents(dispatchNewTx);
-      console.log(contractMethods.getTransactions());
+      if(props.contractMethods.initialized){
+        contractMethods = props.contractMethods
+      }else {
+        setLoadingMessage("Initializing the Blockchain connection...")
+        await contractMethods.init()
+        dispatch({
+          type: "INIT_CONTRACT_METHODS",
+          value: contractMethods,
+        });
+      }
+       await onRefresh()
+
     }
   }, []);
   const makeViewable = (_transactions) => {
@@ -141,8 +162,9 @@ const HomeScreen = ({ navigation, magic, transactions }) => {
           </TouchableOpacity>
         </View>
 
-        {isEmpty ? (
+        {makeViewable(transactions).length === 0 ? (
           <View style={styles.wrapper}>
+            {isFetching? <Text>{loadingMessage}</Text> : <></>}
             <Image source={HOME_EMPTY} style={styles.image} />
             <Text style={styles.text}>
               All requests have been fullfilled. Take a break, get some air,
@@ -158,8 +180,10 @@ const HomeScreen = ({ navigation, magic, transactions }) => {
             }}
           >
             <FlatList
-              data={[...makeViewable(transactions), ...depositRequestData]}
+              data={makeViewable(transactions)}
               keyExtractor={(item) => item._id}
+              onRefresh={() => onRefresh()}
+              refreshing={isFetching}
               renderItem={({ item }) => (
                 <RequestCard
                   _id={item._id}
@@ -167,6 +191,7 @@ const HomeScreen = ({ navigation, magic, transactions }) => {
                   stars={item.stars}
                   rating={item.rating}
                   type={item.type}
+                  transaction={item}
                   deleteItem={removeDepositRequestItem}
                 />
               )}
@@ -317,6 +342,7 @@ const mapStateToProps = (state) => {
   return {
     magic: state.magic,
     transactions: state.transactions,
+    contractMethods: state.contractMethods
   };
 };
 const mapDispatchToProps = (dispatch) => {

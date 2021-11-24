@@ -20,7 +20,7 @@ function ContractMethods(magic) {
         "ConfirmationCompletedEvent",
         "TransactionCompletionEvent"
     ]
-    let goldToken = null
+    let stableToken
     let transactions = []
 
     this.constructor = function (magicInstance) {
@@ -32,17 +32,19 @@ function ContractMethods(magic) {
     }
 
     this.init = async () => {
-        let accounts = await kit.web3.eth.getAccounts()
+        const accounts = await kit.web3.eth.getAccounts()
         kit.defaultAccount = accounts[0]
         web3.eth.defaultAccount = accounts[0]
-        await kit.setFeeCurrency(CeloContract.StableToken)
-        goldToken = await kit._web3Contracts.getGoldToken()
+        await kit.setFeeCurrency(CeloContract.StableToken) // To use cUSD
+        stableToken = await kit.contracts.getStableToken() // To use cUSD
+        this.stableToken = stableToken
+        this.initialized = true
     }
 
     async function approveTransaction(amount) {
         try {
             let txObject = await ERC20.methods.approve(CONTRACT_ADDRESS, amount)
-            let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount});
+            let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount, feeCurrency: stableToken.address});
             let receipt = await tx.waitReceipt();
             console.log("From Approve", receipt)
             return receipt
@@ -58,7 +60,7 @@ function ContractMethods(magic) {
     this.initializeDepositTransaction = async (amount) => {
         await approveTransaction(getAmountInGolds(amount + 1))
         let txObject = await contract.methods.initializeDepositTransaction(getAmountInGolds(amount));
-        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount});
+        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount, feeCurrency: stableToken.address});
         let receipt = await tx.waitReceipt();
         console.log("From initializeDepositTransaction", receipt)
         return receipt
@@ -67,7 +69,7 @@ function ContractMethods(magic) {
     this.initializeWithdrawalTransaction = async (amount) => {
         await approveTransaction(getAmountInGolds(amount + 1))
         let txObject = await contract.methods.initializeWithdrawalTransaction(getAmountInGolds(amount));
-        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount});
+        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount, feeCurrency: stableToken.address});
         let receipt = await tx.waitReceipt();
         console.log("From initializeWithdrawalTransaction", receipt)
         return receipt
@@ -75,7 +77,7 @@ function ContractMethods(magic) {
 
     this.agentAcceptDepositTransaction = async (transactionId) => {
         let txObject = await contract.methods.agentAcceptDepositTransaction(transactionId);
-        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount});
+        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount, feeCurrency: stableToken.address});
         let receipt = await tx.waitReceipt();
         console.log("From agentAcceptDepositTransaction", receipt)
         return receipt
@@ -83,7 +85,7 @@ function ContractMethods(magic) {
 
     this.agentAcceptWithdrawalTransaction = async (transactionId) => {
         let txObject = await contract.methods.agentAcceptWithdrawalTransaction(transactionId);
-        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount});
+        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount, feeCurrency: stableToken.address});
         let receipt = await tx.waitReceipt();
         console.log("From agentAcceptWithdrawalTransaction", receipt)
         return receipt
@@ -91,7 +93,7 @@ function ContractMethods(magic) {
 
     this.clientConfirmPayment = async (transactionId) => {
         let txObject = await contract.methods.clientConfirmPayment(transactionId);
-        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount});
+        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount, feeCurrency: stableToken.address});
         let receipt = await tx.waitReceipt();
         console.log("From clientConfirmPayment", receipt)
         return receipt
@@ -99,7 +101,7 @@ function ContractMethods(magic) {
 
     this.agentConfirmPayment = async (transactionId) => {
         let txObject = await contract.methods.agentConfirmPayment(transactionId);
-        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount});
+        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount, feeCurrency: stableToken.address});
         let receipt = await tx.waitReceipt();
         console.log("From agentConfirmPayment", receipt)
         return receipt
@@ -114,7 +116,7 @@ function ContractMethods(magic) {
             clientAddress: eventWTX[2],
             agentAddress: eventWTX[3],
             status: Status[parseInt(eventWTX[4])],
-            amount: eventWTX[5],
+            amount: kit.web3.utils.fromWei(eventWTX[5], 'ether'),
             agentFee: eventWTX[6],
             wakalaFee: eventWTX[7],
             grossAmount: eventWTX[8],
@@ -152,7 +154,7 @@ function ContractMethods(magic) {
         if (event.returnValues.wtx !== null) {
             let wakalaTransaction = mapEventToTransaction(event.returnValues.wtx)
             if(wakalaTransaction.agentAddress === kit.defaultAccount
-                && (wakalaTransaction.status !== "AWAITING_AGENT" || wakalaTransaction.status !== "DONE")){
+                && (wakalaTransaction.status !== "AWAITING_AGENT" && wakalaTransaction.status !== "DONE")){
                 transactions.push(wakalaTransaction)
             }else if(wakalaTransaction.agentAddress !== kit.defaultAccount && wakalaTransaction.status !== "DONE"){
                 transactions.push(wakalaTransaction)

@@ -65,6 +65,7 @@ const swipeRightContent = () => {
 };
 
 const RequestCard = (props) => {
+  const {transaction} = props
   const [amount, setAmount] = useState();
   const [starsRate, setStarsRate] = useState();
   const [ratingsNumber, setRatingsNumber] = useState();
@@ -90,6 +91,7 @@ const RequestCard = (props) => {
         navigation.navigate("Accept Request", {
           type: type,
           value: amount,
+          transaction: transaction
         })
       }
       activeOpacity={0.6}
@@ -101,6 +103,7 @@ const RequestCard = (props) => {
           navigation.navigate("Accept Request", {
             type: type,
             value: amount,
+            transaction: transaction
           })
         }
         overshootRight={false}
@@ -150,6 +153,7 @@ const RequestCard = (props) => {
                   navigation.navigate("Accept Request", {
                     type: type,
                     value: amount,
+                    transaction: transaction
                   })
                 }
               >

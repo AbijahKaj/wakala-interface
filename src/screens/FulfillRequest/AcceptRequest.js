@@ -61,13 +61,14 @@ const ModalContent = (props) => {
   );
 };
 
-const AcceptRequest = () => {
+const AcceptRequest = (props) => {
   const route = useRoute();
   const modalRef = useRef();
   const navigation = useNavigation();
 
   const type = route.params.type;
   const value = route.params.value;
+  const transaction = route.params.transaction
 
   const [isActionSuccess, setIsActionSuccess] = useState(true);
 
@@ -109,6 +110,7 @@ const AcceptRequest = () => {
       navigation.navigate("Confirm Payment", {
         type: type,
         value: value,
+        transaction: transaction
       });
     }
   };
@@ -124,6 +126,7 @@ const AcceptRequest = () => {
     navigation.navigate("Confirm Payment", {
       value: value,
       type: type,
+      transaction: transaction
     });
   };
 

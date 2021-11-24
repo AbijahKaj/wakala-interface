@@ -139,11 +139,11 @@ const ConfirmFunds = (props) => {
     }
 
     modalRef.current?.closeModal();
-
-    navigation.navigate("Confirm Request", {
+    navigation.navigate("Home Screen");
+    /*navigation.navigate("Confirm Request", {
       value: value,
       operation: operation,
-    });
+    });*/
   };
   let modalLoading = () => {
     return (
