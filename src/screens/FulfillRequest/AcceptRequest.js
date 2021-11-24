@@ -124,20 +124,7 @@ const AcceptRequest = (props) => {
   };
 
   const openModal = () => {
-    if (!isActionSuccess) {
-      modalRef.current?.openModal();
-      return;
-    }
-
-    if (type === "DEPOSIT") {
-      modalRef.current?.openModal();
-    } else {
-      navigation.navigate("Confirm Payment", {
-        type: type,
-        value: value,
-        transaction: transaction
-      });
-    }
+    modalRef.current?.openModal();
   };
 
   const closeModal = () => {
@@ -357,7 +344,7 @@ const modalStyles = StyleSheet.create({
     color: "#133FDB",
     textAlign: "center",
     fontFamily: "Rubik_500Medium",
-    marginTop: 60,
+    marginTop: 30,
   },
 });
 

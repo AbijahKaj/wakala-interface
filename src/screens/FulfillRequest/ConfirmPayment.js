@@ -8,9 +8,12 @@ import SwipeButton from "../../components/SwipeButton";
 import ScreenCmpt from "../../components/ScreenCmpt";
 import Modal from "../../components/Modal";
 
-import { COLORS, SIZES } from "../../consts/theme";
+import {COLORS, FONTS, SIZES} from "../../consts/theme";
 import { ERROR, BORED } from "../../assets/images";
 import {mainStyles, cardStyles, modalStyles} from "../../consts/transactionScreenStyles";
+import ContractMethods from "../../utils/celo-integration/ContractMethods";
+import {connect} from "react-redux";
+import ModalLoading from "../../components/ModalLoading";
 
 const styles = mainStyles
 
@@ -81,6 +84,9 @@ const ModalContent = (props) => {
           <Text style={modalStyles.text}>
             Something just happened. Please try again.
           </Text>
+          <Text style={{ ...FONTS.body5, textAlign: "center", marginTop: 5 }}>
+            {props.errorMessage}
+          </Text>
           <TouchableOpacity onPress={() => props.handleAction()}>
             <Text style={modalStyles.button}>Try again</Text>
           </TouchableOpacity>
@@ -97,33 +103,39 @@ const ConfirmPayment = () => {
 
   const type = route.params.type;
   const value = route.params.value;
+  const transaction = route.params.transaction
 
   const [isActionSuccess, setIsActionSuccess] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState("");
 
   const handleAction = async () => {
-    // Call function to perform the addressed action
-    // If response is success the set isOperationSuccess
-    // to true and open modal
-    // if (type === "deposit") {
-    //   performDepositAction().then(
-    //     (response) => {
-    //       setIsActionSuccess(true);
-    //     },
-    //     (error) => {
-    //       setIsActionSuccess(false);
-    //     }
-    //   );
-    // } else {
-    //   performWithdrawAction().then(
-    //     (response) => {
-    //       setIsActionSuccess(true);
-    //     },
-    //     (error) => {
-    //       setIsActionSuccess(false);
-    //     }
-    //   );
-    // }
     openModal();
+    //Init
+    setIsLoading(true);
+    setLoadingMessage("Initializing the transaction...");
+    let contractMethods = new ContractMethods(props.magic)
+    if(props.contractMethods.initialized){
+      contractMethods = props.contractMethods
+    }else {
+      setLoadingMessage("Initializing the Blockchain connection...")
+      await contractMethods.init()
+      dispatch({
+        type: "INIT_CONTRACT_METHODS",
+        value: contractMethods,
+      });
+    }
+      setLoadingMessage("Sending the transaction confirmation...");
+      try {
+        let result = await contractMethods.agentConfirmPayment(transaction.id);
+        setLoadingMessage("");
+        setIsLoading(false);
+      } catch (error) {
+        setLoadingMessage(error.toString());
+        setIsActionSuccess(false);
+        setIsLoading(false);
+      }
+    setIsLoading(false);
   };
 
   const openModal = () => {
@@ -138,7 +150,7 @@ const ConfirmPayment = () => {
 
     modalRef.current?.closeModal();
 
-    if (type === "deposit") {
+    if (type === "DEPOSIT") {
       navigation.navigate("Rate", { operation: type });
     } else {
       navigation.navigate("Success", { operation: type });
@@ -195,27 +207,40 @@ const ConfirmPayment = () => {
           </View>
         </View>
       </ScreenCmpt>
-
       <Modal
-        ref={modalRef}
-        style={
-          !isActionSuccess
-            ? { height: 490 }
-            : type === "deposit"
-            ? { height: 300 }
-            : { height: 420 }
-        }
-        content={
-          <ModalContent
-            handleAction={closeModal}
-            type={type}
-            isActionSuccess={isActionSuccess}
-          />
-        }
+          ref={modalRef}
+          style={
+            !isActionSuccess ? { height: 490 } : type === "DEPOSIT" ? { height: 300 } : { height: 420 }
+          }
+          content={
+            isLoading ? (
+                <ModalLoading loadingMessage={loadingMessage} />
+            ) : (
+                <ModalContent
+                    handleAction={closeModal}
+                    operation={type}
+                    isActionSuccess={isActionSuccess}
+                    errorMessage={loadingMessage}
+                />
+            )
+          }
       />
     </Fragment>
   );
 };
 
+const mapStateToProps = (state) => {
+  return {
+    magic: state.magic,
+    contractMethods: state.contractMethods
+  };
+};
+const mapDispatchToProps = (dispatch) => {
+  return {
+    dispatch: async (action) => {
+      await dispatch(action);
+    },
+  };
+};
 
-export default ConfirmPayment;
+export default connect(mapStateToProps, mapDispatchToProps)(ConfirmPayment);
