@@ -34,8 +34,6 @@ function SetPIN({navigation}) {
 
     );
 }
-let keyWidth = SIZES.width * 0.25;
-let keyHeight = keyWidth * 0.75;
 
 const styles = StyleSheet.create({
     container: {
