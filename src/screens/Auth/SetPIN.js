@@ -1,13 +1,8 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, SafeAreaView} from 'react-native'
-import PINInterface from "../../components/PINInterface";
-import {LinearGradient} from "expo-linear-gradient";
-import HeaderTitle from "../../components/HeaderTitle";
+import {View, StyleSheet} from 'react-native'
 import PINCode from '@haskkor/react-native-pincode'
 import {COLORS, FONTS, SIZES} from "../../consts/theme";
 import ScreenCmpt from "../../components/ScreenCmpt";
-import {Ionicons} from "@expo/vector-icons";
-import {RFPercentage} from "react-native-responsive-fontsize";
 
 function SetPIN({navigation}) {
     const [pin, setPin] = React.useState("")
@@ -19,25 +14,8 @@ function SetPIN({navigation}) {
             setPin(value)
             setTitle("Confirm PIN")
         }
-
     }
-    const titleComponent = (props) => {
-        console.log(props)
-        return(<View style={{width: '100%', justifyContent: 'center', alignItems: 'center'}}>
-            {/*<View style={{flexDirection: "row", width: '100%', justifyContent: "space-between"}}>
-                <TouchableOpacity
-                    onPress={() => navigation.goBack()}
-                    style={{alignSelf: "flex-start"}}>
-                    <Ionicons name="chevron-back" style={{fontSize: RFPercentage(3.2), alignSelf: "flex-start"}}
-                              color={COLORS.darkBlue}/>
-                </TouchableOpacity>
-            </View>*/}
 
-            <Text style={{...styles.title}}>
-                {title}
-            </Text>
-        </View>)
-    }
     return (
         <ScreenCmpt>
                 <View style={styles.wrapper}>
