@@ -86,7 +86,7 @@ const AcceptRequest = (props) => {
     setIsLoading(true);
     setLoadingMessage("Initializing the transaction...");
     let contractMethods = new ContractMethods(props.magic)
-    if(props.contractMethods.initialized){
+    if(props.contractMethods instanceof ContractMethods){
       contractMethods = props.contractMethods
     }else {
       setLoadingMessage("Initializing the Blockchain connection...")

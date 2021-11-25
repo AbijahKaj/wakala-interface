@@ -126,8 +126,7 @@ const HomeScreen = (props) => {
     const isLoggedIn = await magic.user.isLoggedIn();
     if (isLoggedIn) {
 
-      await contractMethods.init();
-      if(props.contractMethods.initialized){
+      if(props.contractMethods instanceof ContractMethods){
         contractMethods = props.contractMethods
       }else {
         setLoadingMessage("Initializing the Blockchain connection...")
@@ -140,7 +139,7 @@ const HomeScreen = (props) => {
        await onRefresh()
 
     }
-  }, []);
+  }, [props.contractMethods]);
   const makeViewable = (_transactions) => {
     let newTXs = [];
     _transactions.forEach((tx) => {
