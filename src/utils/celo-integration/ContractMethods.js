@@ -1,8 +1,9 @@
 import wakalaEscrowAbi from "../celo-integration/WakalaEscrow.abi.json";
 import ERC20Abi from "../celo-integration/ERC20.abi.json"
-import {CONTRACT_ADDRESS, ERC20_ADDRESS} from "../Constants";
+import {CONTRACT_ADDRESS, ERC20_ADDRESS, KARMA_CONTRACT_ADDRESS} from "../Constants";
 import {CeloContract, newKitFromWeb3} from '@celo/contractkit'
 import Web3 from "web3";
+import karmaAbi from "../celo-integration/karma.abi.json";
 
 function ContractMethods(magic) {
 
@@ -10,6 +11,8 @@ function ContractMethods(magic) {
     let web3 = new Web3(magic.rpcProvider)
     let kit = newKitFromWeb3(web3);
     let contract = new kit.web3.eth.Contract(wakalaEscrowAbi, CONTRACT_ADDRESS);
+    // Karma Protocol integration => karma contract link: https://github.com/karma-reputation-protocol/karma/tree/main
+    let karmaContract = new kit.web3.eth.Contract(karmaAbi, KARMA_CONTRACT_ADDRESS);
     let ERC20 = new kit.web3.eth.Contract(ERC20Abi, ERC20_ADDRESS);
 
     const events = [
@@ -27,6 +30,7 @@ function ContractMethods(magic) {
         this.magic = magicInstance
         this.kit = kit
         this.contract = contract
+        this.karmaContract = karmaContract
         this.web3 = web3
         this.ERC20 = ERC20
         this.initialized = false
@@ -100,6 +104,41 @@ function ContractMethods(magic) {
         return receipt
     };
 
+    /**
+    * @dev Function to update a user's karma value for a specified application
+    * @param address The address of the user whose karma is being updated
+    * @param amount The amount used to calculate how much should be added or removed from
+                    a user's karma value. If the amount is positive, it will increase the 
+                    user's karma. If it is negative, it will decrease it. 
+    * @param updateFunctionKey An integer specifying which function should be used to update
+                               the user's karma. Setting the value to 1 will lead to a weighted 
+                               sum updated and setting it to 2 will lead to an averaged sum. 
+                               See README for details. => pass 2 for our case 
+                               karma contract link: https://github.com/karma-reputation-protocol/karma/tree/main
+
+    **/
+    this.updateKarma = async (address, amount, updateFunctionKey) => {
+        let txObject = await karmaContract.methods.updateKarma(address, amount, updateFunctionKey);
+        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount});
+        let receipt = await tx.waitReceipt();
+        console.log("From updateKarma", receipt)
+        return receipt
+    }
+
+    /**
+    * @dev Function to retireve the karma value for a user. 
+    * @param address The address of the user whose karma is being accessed
+    **/
+
+    this.getKarma = async (address) => {
+        let txObject = await karmaContract.methods.getKarma(address);
+        let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount});
+        let receipt = await tx.waitReceipt();
+        console.log("From getKarma", receipt)
+        return receipt
+
+    }
+
     this.agentConfirmPayment = async (transactionId) => {
         let txObject = await contract.methods.agentConfirmPayment(transactionId);
         let tx = await kit.sendTransactionObject(txObject, {'from': kit.defaultAccount, feeCurrency: stableToken.address});
@@ -167,6 +206,8 @@ function ContractMethods(magic) {
     this.getTransactions = () => {
         return transactions
     }
+
+
     this.getPastEvents = (callback) => {
         //Past Events
         let options = {
