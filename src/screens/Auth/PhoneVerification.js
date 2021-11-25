@@ -6,13 +6,14 @@ import {ScrollView} from "react-native-gesture-handler";
 import Wave from "../../components/WaveAnimation";
 import {WAKALA_LOGO} from "../../assets/images";
 import Animated, {Easing, useSharedValue, withRepeat, withTiming} from "react-native-reanimated";
+import {connect, useDispatch} from "react-redux";
 
 function PhoneVerificationLoader({navigation}) {
     const [modalVisible, setModalVisible] = React.useState(false);
     const [allSet, setAllSet] = React.useState(false);
     const [progress, setProgress] = useState(new Animated.Value(0));
     const logo = WAKALA_LOGO;
-    const dispatch = () => {}
+    const dispatch = useDispatch()
     const moveNext = () => {
         setAllSet(true);
         setTimeout(() => {
@@ -153,4 +154,17 @@ const styles = StyleSheet.create({
         textAlign: "center"
     }
 });
-export default PhoneVerificationLoader;
+
+const mapStateToProps = (state) => {
+    return {
+        //favorites: state.favorites
+    }
+}
+const mapDispatchToProps = dispatch => {
+    return {
+        dispatch: async (action) => {
+            await dispatch(action)
+        }
+    }
+}
+export default connect(mapStateToProps, mapDispatchToProps)(PhoneVerificationLoader);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
-  Dimensions,
+  Dimensions, Keyboard,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -15,6 +15,7 @@ import { COLORS, FONTS, SIZES } from "../../consts/theme";
 import HeaderTitle from "../../components/HeaderTitle";
 import PhoneInput from "react-native-phone-number-input";
 import { connect, useDispatch } from "react-redux";
+import ScreenCmpt from "../../components/ScreenCmpt";
 
 function SignUpScreen({ navigation, magic }) {
   const [countryCode, setCountryCode] = React.useState("+254");
@@ -35,6 +36,7 @@ function SignUpScreen({ navigation, magic }) {
       setValid(isValid);
 
       if (isValid) {
+        Keyboard.dismiss()
         let DID = await magic.auth.loginWithSMS({
           phoneNumber: value, //pass the phone input value to get otp sms
         });
@@ -75,16 +77,9 @@ function SignUpScreen({ navigation, magic }) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <LinearGradient
-        style={styles.container}
-        colors={["rgba(247, 239, 250, 1.0)", "rgba(252, 248, 237, 1.0)"]}
-        start={[1, 0]}
-        end={[1, 1]}
-      >
-        <SafeAreaView style={styles.container}>
+      <ScreenCmpt>
           <View style={styles.wrapper}>
             <HeaderTitle navigation={navigation} title={title} />
-
             <View>
               <Text
                 style={{ ...FONTS.body3, fontSize: 14, alignSelf: "center" }}
@@ -134,8 +129,7 @@ function SignUpScreen({ navigation, magic }) {
             </View>
             <magic.Relayer />
           </View>
-        </SafeAreaView>
-      </LinearGradient>
+      </ScreenCmpt>
     </KeyboardAvoidingView>
   );
 }

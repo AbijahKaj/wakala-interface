@@ -39,7 +39,6 @@ function VerifyCeloCodes({navigation}) {
     };
     React.useEffect(() => {
         if (allSet) {
-
             moveNext();
         }
     }, []);

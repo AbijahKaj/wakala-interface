@@ -15,6 +15,7 @@ import { COLORS, FONTS, SIZES } from "../../consts/theme";
 import { Feather } from "@expo/vector-icons";
 import HeaderTitle from "../../components/HeaderTitle";
 import {connect, useDispatch} from "react-redux";
+import ScreenCmpt from "../../components/ScreenCmpt";
 
 function ConnectPhone({ navigation }) {
   const [countryCode, setCountryCode] = React.useState("+254");
@@ -33,13 +34,7 @@ function ConnectPhone({ navigation }) {
   const [modalVisible, setModalVisible] = React.useState(false);
 
   return (
-    <LinearGradient
-      style={styles.container}
-      colors={["rgba(247, 239, 250, 1.0)", "rgba(252, 248, 237, 1.0)"]}
-      start={[1, 0]}
-      end={[1, 1]}
-    >
-      <SafeAreaView style={styles.container}>
+    <ScreenCmpt>
         <View style={styles.wrapper}>
           <HeaderTitle
             title="Connect your phone number"
@@ -181,8 +176,7 @@ function ConnectPhone({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
-      </SafeAreaView>
-    </LinearGradient>
+    </ScreenCmpt>
   );
 }
 

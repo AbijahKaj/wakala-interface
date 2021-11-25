@@ -10,14 +10,11 @@ import {LinearGradient} from "expo-linear-gradient";
 import {COLORS, FONTS, SIZES} from "../../consts/theme";
 import HeaderTitle from "../../components/HeaderTitle";
 import {RFPercentage} from "react-native-responsive-fontsize";
+import ScreenCmpt from "../../components/ScreenCmpt";
 
 export default function ToC({navigation}) {
     return (
-        <LinearGradient style={styles.container}
-                        colors={["rgba(247, 239, 250, 1.0)", "rgba(252, 248, 237, 1.0)"]}
-                        start={[1, 0]}
-                        end={[1, 1]}>
-            <SafeAreaView style={styles.container}>
+        <ScreenCmpt>
                 <View style={styles.wrapper}>
                     <HeaderTitle navigation={navigation} title="Terms & Conditions"/>
                     <View style={styles.titleWrapper}>
@@ -57,8 +54,7 @@ export default function ToC({navigation}) {
                         </TouchableOpacity>
                     </View>
                 </View>
-            </SafeAreaView>
-        </LinearGradient>
+        </ScreenCmpt>
     );
 }
 const styles = StyleSheet.create({
