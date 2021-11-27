@@ -134,12 +134,17 @@ const AcceptRequest = (props) => {
     }
 
     modalRef.current?.closeModal();
+    if (type === "DEPOSIT") {
+      navigation.navigate("Home Screen");
+    }else{
+      navigation.navigate("Confirm Payment", {
+        value: value,
+        type: type,
+        transaction: transaction
+      });
+    }
 
-    navigation.navigate("Confirm Payment", {
-      value: value,
-      type: type,
-      transaction: transaction
-    });
+
   };
 
   return (

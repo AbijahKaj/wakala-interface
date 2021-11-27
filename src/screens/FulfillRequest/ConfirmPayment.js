@@ -48,7 +48,7 @@ const ModalContent = (props) => {
   return (
     <View style={modalStyles.container}>
       {props.isActionSuccess ? (
-        props.type === "deposit" ? (
+        props.type === "DEPOSIT" ? (
           <View>
             <Ionicons
               name="checkmark-circle"
@@ -96,7 +96,7 @@ const ModalContent = (props) => {
   );
 };
 
-const ConfirmPayment = () => {
+const ConfirmPayment = (props) => {
   const route = useRoute();
   const modalRef = useRef();
   const navigation = useNavigation();
@@ -125,16 +125,23 @@ const ConfirmPayment = () => {
         value: contractMethods,
       });
     }
-      setLoadingMessage("Sending the transaction confirmation...");
-      try {
-        let result = await contractMethods.agentConfirmPayment(transaction.id);
-        setLoadingMessage("");
-        setIsLoading(false);
-      } catch (error) {
-        setLoadingMessage(error.toString());
-        setIsActionSuccess(false);
-        setIsLoading(false);
+
+    setLoadingMessage("Sending the transaction confirmation...");
+    try {
+      if(transaction.clientAddress === contractMethods.kit.defaultAccount) {
+        await contractMethods.clientConfirmPayment(transaction.id);
       }
+      else {
+        console.log(transaction.clientAddress, transaction.agentAddress)
+        await contractMethods.agentConfirmPayment(transaction.id);
+      }
+      setLoadingMessage("");
+      setIsLoading(false);
+    } catch (error) {
+      setLoadingMessage(error.toString());
+      setIsActionSuccess(false);
+      setIsLoading(false);
+    }
     setIsLoading(false);
   };
 
@@ -164,7 +171,7 @@ const ConfirmPayment = () => {
           <View>
             <View style={styles.titleContainer}>
               <View style={styles.iconContainer}>
-                {type === "deposit" ? (
+                {type === "DEPOSIT" ? (
                   <FontAwesome5 name="money-bill" size={20} color="white" />
                 ) : (
                   <Ionicons
@@ -175,24 +182,24 @@ const ConfirmPayment = () => {
                 )}
               </View>
               <Text style={styles.title}>
-                {type === "deposit"
+                {type === "DEPOSIT"
                   ? "Confirm M-PESA Payment "
                   : "Send M-PESA now"}
               </Text>
             </View>
 
             <Text style={[styles.text, { marginBottom: 30, marginTop: 15 }]}>
-              {type === "deposit"
+              {type === "DEPOSIT"
                 ? "The agent confirmed that he sent Ksh 1,000 to your number +254 706 427 718"
                 : "Send M-PESA to the member so that you can receive your cUSD."}
             </Text>
             <Text style={styles.text}>
-              {type === "deposit" &&
+              {type === "DEPOSIT" &&
                 "To receive your cUSD, send M-PESA to details below."}
             </Text>
           </View>
 
-          {type === "withdraw" && <CardElement value={value} />}
+          {type === "WITHDRAWAL" && <CardElement value={value} />}
 
           <View>
             <SwipeButton handleAction={handleAction} />
@@ -201,7 +208,7 @@ const ConfirmPayment = () => {
               onPress={() => navigation.goBack()}
             >
               <Text style={[styles.secondaryButtonText, { color: "#133FDB" }]}>
-                {type === "deposit" ? "Didn’t receive payments?" : "Cancel"}
+                {type === "DEPOSIT" ? "Didn’t receive payments?" : "Cancel"}
               </Text>
             </TouchableOpacity>
           </View>

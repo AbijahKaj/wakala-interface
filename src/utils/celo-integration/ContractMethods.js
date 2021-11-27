@@ -42,6 +42,7 @@ function ContractMethods(magic) {
         web3.eth.defaultAccount = accounts[0]
         await kit.setFeeCurrency(CeloContract.StableToken) // To use cUSD
         stableToken = await kit.contracts.getStableToken() // To use cUSD
+        kit.defaultFeeCurrency = CeloContract.StableToken
         this.stableToken = stableToken
         this.initialized = true
     }
@@ -126,7 +127,7 @@ function ContractMethods(magic) {
     }
 
     /**
-    * @dev Function to retireve the karma value for a user. 
+    * @dev Function to retrieve the karma value for a user.
     * @param address The address of the user whose karma is being accessed
     **/
 
@@ -165,7 +166,7 @@ function ContractMethods(magic) {
         }
     }
 
-    this.initEventListeners = () => {
+    this.initEventListeners = (callback = null) => {
         let options = {
             filter: {
                 value: [],
@@ -176,7 +177,7 @@ function ContractMethods(magic) {
             contract.events[WakalaEvent](options)
                 //data – Will fire each time an event of the type you are listening for has been emitted
                 .on('data', event => {
-                    handleEvent(event)
+                    handleEvent(event, callback)
                 })
                 //changed – Will fire for each event of the type you are listening for that has been removed from the blockchain.
                 .on('changed', changed => console.log(WakalaEvent, changed))
@@ -218,14 +219,14 @@ function ContractMethods(magic) {
             toBlock: 'latest'
         };
         events.map((WakalaEvent) => {
-            contract.getPastEvents(WakalaEvent, options)
+            contract.getPastEvents("TransactionInitEvent", options)
                 .then(results => {
                     if (results.length !== 0) {
                         results.forEach(event => handleEvent(event, callback))
                     }
                 })
                 .catch(err => {
-                    console.log(WakalaEvent, err)
+                    //console.log(WakalaEvent, err)
                 });
         })
         return transactions

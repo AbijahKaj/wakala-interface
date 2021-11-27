@@ -114,10 +114,23 @@ const HomeScreen = (props) => {
     setIsFetching(true)
     const transactions = contractMethods.initEventListeners();
     const dispatchNewTx = (tx) => {
-      dispatch({ type: "ADD_TRANSACTION", value: tx });
+      if(tx.status === "AWAITING_CONFIRMATIONS"
+          && (tx.clientAddress === contractMethods.kit.defaultAccount || tx.agentAddress === contractMethods.kit.defaultAccount)){
+        navigation.navigate("Confirm Payment", {
+            value: tx.amount,
+            operation: tx.txType,
+            transaction: tx
+          });
+      }
+      if(tx.status === "AWAITING_AGENT"
+          && tx.clientAddress !== contractMethods.kit.defaultAccount
+          && tx.agentAddress !== contractMethods.kit.defaultAccount){
+        dispatch({ type: "ADD_TRANSACTION", value: tx });
+      }
+
     };
     contractMethods.getPastEvents(dispatchNewTx);
-    console.log(transactions);
+    contractMethods.initEventListeners(dispatchNewTx);
     setIsFetching(false)
   }
 
@@ -125,7 +138,6 @@ const HomeScreen = (props) => {
     getDepositRequestData();
     const isLoggedIn = await magic.user.isLoggedIn();
     if (isLoggedIn) {
-
       if(props.contractMethods instanceof ContractMethods){
         contractMethods = props.contractMethods
       }else {
@@ -136,19 +148,19 @@ const HomeScreen = (props) => {
           value: contractMethods,
         });
       }
-       await onRefresh()
-
+      await onRefresh()
     }
   }, [props.contractMethods]);
+  const makeOneViewable = (tx) => {
+    let newTX = tx;
+    newTX._id = tx.id;
+    newTX.stars = 0;
+    newTX.type = tx.txType;
+    return newTX
+  }
   const makeViewable = (_transactions) => {
     let newTXs = [];
-    _transactions.forEach((tx) => {
-      let newTX = tx;
-      newTX._id = tx.id;
-      newTX.stars = 0;
-      newTX.type = tx.txType;
-      newTXs.push(newTX);
-    });
+    _transactions.forEach((tx) => newTXs.push(makeOneViewable(tx)));
     return newTXs;
   };
 

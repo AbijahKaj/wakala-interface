@@ -8,7 +8,24 @@ let initialState = {
     magic: {},
     phoneNumber: null,
     transactions: [],
+    confirmations: [],
     contractMethods: {}
+}
+
+const updateTransactions = (state, action) => {
+    let nextState
+    const index = state.confirmations.findIndex( item => item.id === action.value.id)
+    if(index === -1) {
+        nextState = {...state, confirmations: [action.value, ...state.confirmations]}
+    }
+    else {
+        // We just update the transaction
+        let elements = state.confirmations
+        //console.log(elements[index])
+        elements.splice(index, 1)
+        nextState = {...state, confirmations: [action.value, ...elements]}
+    }
+    return nextState || state
 }
 
 const saveSession = async (state) => {
@@ -50,11 +67,13 @@ export default function globalStore(state = initialState, action) {
             else {
                 // We just update the transaction
                 let elements = state.transactions
-                console.log(elements[index])
+                //console.log(elements[index])
                 elements.splice(index, 1)
                 nextState = {...state, transactions: [action.value, ...elements]}
             }
             return nextState || state
+        case 'ADD_TRANSACTION_TO_BE_CONFIRMED':
+            return updateTransactions(state, action)
         default:
             return state
     }
