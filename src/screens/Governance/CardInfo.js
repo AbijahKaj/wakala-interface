@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   Dimensions,
   Image,
@@ -6,6 +6,7 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Linking,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,6 +14,7 @@ import { Ionicons, Feather } from "@expo/vector-icons";
 
 import ScreenCmpt from "../../components/ScreenCmpt";
 import ProgressCircle from "../../components/ProgressCircle";
+import FloatingDialog from "../../components/FloatingDialog";
 
 import { GOVERNANCE, PROPOSALS, TOKENS, VOTING } from "../../assets/images";
 import { COLORS, SIZES } from "../../consts/theme";
@@ -20,6 +22,8 @@ import { COLORS, SIZES } from "../../consts/theme";
 const CardInfo = () => {
   const navigation = useNavigation();
   const [index, setIndex] = useState(0);
+  const floatingDialogRef = useRef();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const image = [GOVERNANCE, PROPOSALS, VOTING, TOKENS];
   const titleText = [
@@ -34,20 +38,74 @@ const CardInfo = () => {
     "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.",
     "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.",
   ];
+  const dialogInfoText = [
+    "To learn more about Wakala Dao Governance, visit ",
+    "To learn more about proposals, visit ",
+    "To learn more about voting, visit ",
+    "To learn more about wakala tokens, visit ",
+  ];
+  const dialogInfoLink = [
+    "docs/wakala.xyz/wakaladaogovernance",
+    "docs/wakala.xyz/proposals",
+    "docs/wakala.xyz/voting",
+    "docs/wakala.xyz/proposals",
+  ];
 
   function clickNext() {
     if (index == 3) {
       setIndex(4);
-      setTimeout(() => {
-        navigation.navigate("Join");
-      }, 200);
+      navigation.navigate("Join");
       setTimeout(() => {
         setIndex(0);
       }, 500);
     } else {
+      closeDialog();
       setIndex(index + 1);
     }
   }
+
+  const openDialog = () => {
+    floatingDialogRef.current?.openDialog();
+    setIsDialogOpen(!isDialogOpen);
+  };
+
+  const closeDialog = () => {
+    floatingDialogRef.current?.closeDialog();
+    setIsDialogOpen(!isDialogOpen);
+  };
+
+  const handleDialog = () => {
+    if (isDialogOpen) {
+      closeDialog();
+    } else {
+      openDialog();
+    }
+  };
+
+  const useViewSize = () => {
+    const [size, setSize] = useState(null);
+
+    const onLayout = useCallback((event) => {
+      const { x, y, width, height } = event.nativeEvent.layout;
+      setSize({ x, y, width, height });
+    }, []);
+
+    return [size, onLayout];
+  };
+
+  const useTextSize = () => {
+    const [size, setSize] = useState(null);
+
+    const onLayout = useCallback((event) => {
+      const { x, y, width, height } = event.nativeEvent.layout;
+      setSize({ x, y, width, height });
+    }, []);
+
+    return [size, onLayout];
+  };
+
+  const [viewSize, onViewLayout] = useViewSize();
+  const [textSize, onTextLayout] = useTextSize();
 
   return (
     <ScreenCmpt>
@@ -60,7 +118,38 @@ const CardInfo = () => {
         <View style={styles.container}>
           <Image source={image[index]} style={styles.image} />
           <Text style={styles.title}>{titleText[index]}</Text>
-          <Text style={styles.subtitle}>{subTitleText[index]}</Text>
+          <View onLayout={onViewLayout}>
+            <Text style={styles.subtitle} onLayout={onTextLayout}>
+              {subTitleText[index]}
+            </Text>
+            <TouchableOpacity
+              style={{
+                position: "absolute",
+                top: viewSize ? viewSize.x + 14 : 0,
+                left: textSize ? textSize.width - 45 : 0,
+              }}
+              onPress={handleDialog}
+            >
+              <Feather name="info" size={11} color="#222222" />
+            </TouchableOpacity>
+          </View>
+
+          <FloatingDialog
+            ref={floatingDialogRef}
+            posX={viewSize ? viewSize.y + viewSize.height : 0}
+            posY={textSize ? textSize.width - 30 : 0}
+            content={
+              <Text>
+                {dialogInfoText[index]}
+                <Text
+                  style={{ color: "blue" }}
+                  onPress={() => Linking.openURL("wakala.xyz/fees.")}
+                >
+                  {dialogInfoLink[index]}.
+                </Text>
+              </Text>
+            }
+          />
 
           <TouchableOpacity onPress={clickNext}>
             <ProgressCircle
@@ -90,7 +179,8 @@ const { height } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   container: {
-    flex: 0.8,
+    flex: 1,
+    padding: 30,
     justifyContent: "space-around",
     alignItems: "center",
   },
@@ -143,6 +233,16 @@ const styles = StyleSheet.create({
     height: 50,
     width: 50,
     marginTop: 10,
+  },
+
+  dialogContainer: {
+    width: SIZES.width * 0.8,
+    height: 200,
+    position: "absolute",
+  },
+
+  dialogText: {
+    position: "relative",
   },
 });
 

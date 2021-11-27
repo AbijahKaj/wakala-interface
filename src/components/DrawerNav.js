@@ -31,6 +31,7 @@ import Join from "../screens/Governance/Join";
 import Rate from "./Rate";
 import Success from "./Success";
 import { createStackNavigator } from "@react-navigation/stack";
+import { SIZES } from "../consts/theme";
 
 const Stack = createStackNavigator();
 
@@ -74,6 +75,9 @@ export default function DrawerNav() {
     <Drawer.Navigator
       screenOptions={{
         headerShown: false,
+        drawerStyle: {
+          width: SIZES.width * 0.8,
+        },
       }}
       drawerContent={(props) => <CustomDrawer {...props} />}
     >
