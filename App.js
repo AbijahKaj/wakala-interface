@@ -25,7 +25,6 @@ import globalStore from "./src/redux/GlobalStore";
 import Screens from "./src/screens";
 import { Magic } from "@magic-sdk/react-native";
 import { LogBox } from "react-native";
-import ContractMethods from "./src/utils/celo-integration/ContractMethods";
 LogBox.ignoreLogs([
   "Warning: The provided value 'moz",
   "Warning: The provided value 'ms-stream",

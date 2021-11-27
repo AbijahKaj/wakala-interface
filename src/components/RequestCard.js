@@ -13,8 +13,10 @@ import { Entypo } from "@expo/vector-icons";
 import { Fontisto } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { SIZES } from "../consts/theme";
+import { COLORS, SIZES } from "../consts/theme";
 import { useNavigation } from "@react-navigation/native";
+
+import { TextInputMask } from "react-native-masked-text";
 
 const swipeLeftContent = () => {
   return (
@@ -65,7 +67,7 @@ const swipeRightContent = () => {
 };
 
 const RequestCard = (props) => {
-  const {transaction} = props
+  const { transaction } = props;
   const [amount, setAmount] = useState();
   const [starsRate, setStarsRate] = useState();
   const [ratingsNumber, setRatingsNumber] = useState();
@@ -91,7 +93,7 @@ const RequestCard = (props) => {
         navigation.navigate("Accept Request", {
           type: type,
           value: amount,
-          transaction: transaction
+          transaction: transaction,
         })
       }
       activeOpacity={0.6}
@@ -103,7 +105,7 @@ const RequestCard = (props) => {
           navigation.navigate("Accept Request", {
             type: type,
             value: amount,
-            transaction: transaction
+            transaction: transaction,
           })
         }
         overshootRight={false}
@@ -128,7 +130,16 @@ const RequestCard = (props) => {
                   : "Withdraw Request"}
               </Text>
               <Text style={styles.subTitle}>Amount</Text>
-              <Text style={styles.amount}>Ksh {amount}</Text>
+              <TextInputMask
+                type={"money"}
+                options={{
+                  unit: "Ksh ",
+                }}
+                value={amount}
+                style={styles.amount}
+                placeholder="Ksh 0,00"
+                placeholderTextColor={COLORS.primary}
+              />
             </View>
 
             <View style={styles.moreInfoContainer}>
@@ -153,7 +164,7 @@ const RequestCard = (props) => {
                   navigation.navigate("Accept Request", {
                     type: type,
                     value: amount,
-                    transaction: transaction
+                    transaction: transaction,
                   })
                 }
               >
